@@ -1,9 +1,9 @@
 package main
 
 import (
-  "FaRyuk/cmd"
+	"FaRyuk/cmd"
 )
 
 func main() {
-  cmd.Execute()
+	cmd.Execute()
 }

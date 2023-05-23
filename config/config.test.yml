@@ -1,0 +1,12 @@
+tag: test
+
+Database:
+  DbType: mongo
+  Host: localhost
+  Port: 27017
+  DbName: faryuk-test
+
+Server:
+  Type: HTTP
+  Host: "localhost"
+  Port: 4444

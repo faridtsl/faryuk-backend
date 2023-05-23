@@ -1,59 +1,58 @@
 package config
 
 import (
-  "fmt"
-  "os"
-  "sync"
+	"os"
+	"path"
+	"runtime"
+	"strings"
 
-  "github.com/kelseyhightower/envconfig"
-  "gopkg.in/yaml.v2"
+	"github.com/jinzhu/configor"
 )
 
-type Config struct {
-  Server struct {
-    Port int `yaml:"port" envconfig:"SERVER_PORT" default:"4444"`
-    Addr string `yaml:"addr" envconfig:"SERVER_HOST" default:"0.0.0.0"`
-  } `yaml:"server"`
-  Database struct {
-    URI string `yaml:"uri" envconfig:"DB_URI" required:"true"`
-    Name string `yaml:"name" envconfig:"DB_NAME" required:"true"`
-  } `yaml:"database"`
+func MakeConfig() (*AppConfig, error) {
+	var configFilePath string
+
+	newConfig := configor.New(&configor.Config{})
+
+	getConfigFile := func() string {
+		switch getEnvironment() {
+		case "test":
+			configFilePath = "./config.test.yml"
+		default:
+			configFilePath = "./config.yml"
+		}
+		_, filename, _, _ := runtime.Caller(0)
+		if strings.Contains(strings.ToLower(os.Args[0]), "test") {
+			return path.Join(path.Dir(filename), "./config.test.yml")
+		}
+		return path.Join(path.Dir(filename), configFilePath)
+	}
+
+	conf := new(AppConfig)
+	err := newConfig.Load(conf, getConfigFile())
+	return conf, err
 }
 
-var (
-  once sync.Once
-  Cfg Config
-)
+func getEnvironment() string {
+	if env := os.Getenv("CONFIGOR_ENV"); env != "" {
+		return env
+	}
 
-func Init() {
-  once.Do(func() {
-    readFile(&Cfg)
-    readEnv(&Cfg)
-  })
+	return "dev"
 }
 
-func processError(err error) {
-  fmt.Println(err)
+type Server struct {
+	Port int    `yaml:"Port"`
+	Host string `yaml:"Host"`
+}
+type Database struct {
+	DbType string `yaml:"DbType"`
+	Port   string `yaml:"Port"`
+	Host   string `yaml:"Host"`
+	DbName string `yaml:"DbName"`
 }
 
-func readFile(cfg *Config) {
-  f, err := os.Open("config.yml")
-  if err != nil {
-    processError(err)
-  return
-  }
-  defer f.Close()
-
-  decoder := yaml.NewDecoder(f)
-  err = decoder.Decode(cfg)
-  if err != nil {
-    processError(err)
-  }
-}
-
-func readEnv(cfg *Config) {
-  err := envconfig.Process("", cfg)
-  if err != nil {
-    processError(err)
-  }
+type AppConfig struct {
+	Server   Server   `yaml:"Server"`
+	Database Database `yaml:"Database"`
 }
