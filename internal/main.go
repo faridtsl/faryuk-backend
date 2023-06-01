@@ -1,9 +1,9 @@
 package internal
 
 import (
-  "FaRyuk/api"
+	"FaRyuk/api"
 )
 
 func MainServer() {
-  api.HandleRequests()
+	api.HandleRequests()
 }
